@@ -1,0 +1,36 @@
+GOOS_GOARCH := $(word 4, $(shell go version))
+GOOS        ?= $(word 1, $(subst /, , $(GOOS_GOARCH)))
+GOARCH      ?= $(word 2, $(subst /, , $(GOOS_GOARCH)))
+
+GIT_TAG ?= $(shell git describe --tags --always)
+GIT_SHA ?= $(shell git rev-parse --short HEAD)
+
+VERSION_FULL := $(shell awk -F'[,\\[\\]]' '/AC_INIT/ {print $$5}' configure.ac)
+VERSION      := $(word 1, $(subst -, , $(VERSION_FULL)))
+REVISION     := $(shell echo $(GIT_SHA) | head -c 8)
+
+GO_MILLER_VERSION := $(VERSION)-$(REVISION)-go
+
+DIST_TARGET ?= dist-xz
+
+ARCHIVE := mlr-$(VERSION)-$(GOOS)_$(GOARCH).tar.xz
+
+mlr: c/mlr
+	cp $^ $@
+
+c/mlr:
+	autoreconf -fiv
+	./configure
+	$(MAKE) $(DIST_TARGET)
+	$(MAKE)
+	strip $@ || true
+
+gmlr: go/gmlr
+	cp $^ $@
+
+go/gmlr:
+	GO_MILLER_VERSION=$(GO_MILLER_VERSION) $(MAKE) -C go
+	upx $@ || true
+
+release: mlr gmlr
+	tar -Jcvf $(ARCHIVE) $^

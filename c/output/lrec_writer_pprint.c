@@ -238,22 +238,22 @@ static void print_and_free_record_list_barred(sllv_t* precords, FILE* output_str
 		if (onr == 0 && !headerless_output) {
 
 			j = 0;
-			fputc('+', output_stream);
-			fputc('-', output_stream);
+			fputs("╭", output_stream);
+			fputs("─", output_stream);
 			for (lrece_t* pe = prec->phead; pe != NULL; pe = pe->pnext, j++) {
 				if (j > 0) {
-					fputc('-', output_stream);
+					fputs("─", output_stream);
 				}
 				int d = max_widths[j];
 				for (int i = 0; i < d; i++)
-					fputc('-', output_stream);
-				fputc('-', output_stream);
-				fputc('+', output_stream);
+					fputs("─", output_stream);
+				fputs("─", output_stream);
+				(pe->pnext != NULL) ?  fputs("┬", output_stream) : fputs("╮", output_stream);
 			}
 			fputs(ors, output_stream);
 
 			j = 0;
-			fputc('|', output_stream);
+			fputs("│", output_stream);
 			fputc(ofs, output_stream);
 			for (lrece_t* pe = prec->phead; pe != NULL; pe = pe->pnext, j++) {
 				if (j > 0) {
@@ -266,37 +266,37 @@ static void print_and_free_record_list_barred(sllv_t* precords, FILE* output_str
 					for (int i = 0; i < d; i++)
 						fputc(ofs, output_stream);
 					fputc(ofs, output_stream);
-					fputc('|', output_stream);
+					fputs("│", output_stream);
 				} else {
 					int d = max_widths[j] - strlen_for_utf8_display(pe->key);
 					for (int i = 0; i < d; i++)
 						fputc(ofs, output_stream);
 					fprintf(output_stream, "%s", pe->key);
 					fputc(ofs, output_stream);
-					fputc('|', output_stream);
+					fputs("│", output_stream);
 				}
 			}
 			fputs(ors, output_stream);
 
 			j = 0;
-			fputc('+', output_stream);
-			fputc('-', output_stream);
+			fputs("├", output_stream);
+			fputs("─", output_stream);
 			for (lrece_t* pe = prec->phead; pe != NULL; pe = pe->pnext, j++) {
 				if (j > 0) {
-					fputc('-', output_stream);
+					fputs("─", output_stream);
 				}
 				int d = max_widths[j];
 				for (int i = 0; i < d; i++)
-					fputc('-', output_stream);
-				fputc('-', output_stream);
-				fputc('+', output_stream);
+					fputs("─", output_stream);
+				fputs("─", output_stream);
+				(pe->pnext != NULL) ?  fputs("┼", output_stream) : fputs("┤", output_stream);
 			}
 			fputs(ors, output_stream);
 
 		}
 
 		j = 0;
-		fputc('|', output_stream);
+		fputs("│", output_stream);
 		fputc(ofs, output_stream);
 		for (lrece_t* pe = prec->phead; pe != NULL; pe = pe->pnext, j++) {
 			if (j > 0) {
@@ -311,31 +311,31 @@ static void print_and_free_record_list_barred(sllv_t* precords, FILE* output_str
 				for (int i = 0; i < d; i++)
 					fputc(ofs, output_stream);
 				fputc(ofs, output_stream);
-				fputc('|', output_stream);
+				fputs("│", output_stream);
 			} else {
 				int d = max_widths[j] - strlen_for_utf8_display(value);
 				for (int i = 0; i < d; i++)
 					fputc(ofs, output_stream);
 				fprintf(output_stream, "%s", value);
 				fputc(ofs, output_stream);
-				fputc('|', output_stream);
+				fputs("│", output_stream);
 			}
 		}
 		fputs(ors, output_stream);
 
 		if (pnode->pnext == NULL) {
 			j = 0;
-			fputc('+', output_stream);
-			fputc('-', output_stream);
+			fputs("╰", output_stream);
+			fputs("─", output_stream);
 			for (lrece_t* pe = prec->phead; pe != NULL; pe = pe->pnext, j++) {
 				if (j > 0) {
-					fputc('-', output_stream);
+					fputs("─", output_stream);
 				}
 				int d = max_widths[j];
 				for (int i = 0; i < d; i++)
-					fputc('-', output_stream);
-				fputc('-', output_stream);
-				fputc('+', output_stream);
+					fputs("─", output_stream);
+				fputs("─", output_stream);
+				(pe->pnext != NULL) ?  fputs("┴", output_stream) : fputs("╯", output_stream);
 			}
 			fputs(ors, output_stream);
 		}

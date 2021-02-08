@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 
 #include "lib/mlrutil.h"
 #include "lib/mlr_globals.h"
@@ -14,6 +15,7 @@
 #include "stream/stream.h"
 
 int main(int argc, char** argv) {
+	setlocale(LC_ALL, "");
 
 	mlr_global_init(argv[0], NULL);
 

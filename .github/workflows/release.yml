@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*.*.*-custom
+      - v*.*.*-custom-r*
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            go-stable: true
+            go-version: ''
+            go-arch: amd64
+            x-dist-target: dist-xz
+          - os: macos-latest
+            go-stable: true
+            go-version: ''
+            go-arch: amd64
+            x-dist-target: dist-gzip
+          - os: macos-latest
+            go-stable: false
+            go-version: 1.16.0-rc1
+            go-arch: arm64
+            x-dist-target: dist-gzip
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        stable: ${{ matrix.go-stable }}
+        go-version: ${{ matrix.go-version }}
+
+    - name: Install dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install -y --no-install-recommends flex autoconf libtool
+    - name: Install dependencies
+      if: matrix.os == 'macos-latest'
+      run: brew install flex autoconf libtool automake
+    - name: Install dependencies (extra)
+      if: matrix.os == 'macos-latest' && matrix.go-arch == 'amd64'
+      run: brew install upx
+
+    - name: Build
+      run: make -f Makefile.custom release REVISION=custom
+      env:
+        GOARCH: ${{ matrix.go-arch }}
+        DIST_TARGET: ${{ matrix.x-dist-target }}
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: '*.tar.xz'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

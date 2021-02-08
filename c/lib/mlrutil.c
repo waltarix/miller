@@ -6,6 +6,7 @@
 #include "lib/mlrutil.h"
 #include "lib/mlr_globals.h"
 #include "lib/free_flags.h"
+#include "lib/wcwidth9.h"
 
 // ----------------------------------------------------------------
 void mlr_internal_coding_error(char* file, int line) {
@@ -328,17 +329,22 @@ int mlr_string_pair_hash_func(char* str1, char* str2) {
 }
 
 // ----------------------------------------------------------------
-// 0x00-0x7f (MSB is 0) are ASCII and printable.
-// 0x80-0xbf (MSBs are 10) are continuation characters and don't add to printable length.
-// 0xc0-0xfe (MSBs are 11) are leading characters and do add to printable length.
-// (0xff, incidentally, is never a valid UTF-8 byte).
 int strlen_for_utf8_display(char* str) {
-	int len = 0;
-	for (char* p = str; *p; p++) {
-		if ((*p & 0xc0) != 0x80)
-			len++;
+	int width = 0;
+
+	size_t len;
+	len = mbstowcs(NULL, str, 0);
+
+	wchar_t* wcs;
+	wcs = calloc(len + 1, sizeof(wchar_t));
+	if (mbstowcs(wcs, str, len + 1) == -1) return 0;
+	wchar_t* wp;
+	for (wp = wcs; *wp != 0; wp++) {
+		 width += wcwidth9(*wp);
 	}
-	return len;
+	free(wcs);
+
+	return width;
 }
 
 // ----------------------------------------------------------------

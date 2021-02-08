@@ -36,7 +36,11 @@ libmlr_la_SOURCES=	free_flags.h \
 			string_builder.h \
 			mlr_test_util.c \
 			mlr_test_util.h \
-			utf8.h
+			utf8.h \
+			wcwidth9.h
 
 AM_CPPFLAGS=	-I${srcdir}/../
 AM_CFLAGS=	-std=gnu99
+
+wcwidth9.h:
+	curl -sL https://github.com/waltarix/localedata/releases/download/13.0.0-r1/wcwidth9.h > $@

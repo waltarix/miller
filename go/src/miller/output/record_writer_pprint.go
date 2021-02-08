@@ -1,12 +1,12 @@
 package output
 
 import (
-	"bytes"
 	"container/list"
-	"fmt"
 	"io"
 	"strings"
-	"unicode/utf8"
+
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
 
 	"miller/cliutil"
 	"miller/types"
@@ -87,7 +87,6 @@ func (this *RecordWriterPPRINT) writeHeterogenousList(
 	barred bool,
 	ostream io.WriteCloser,
 ) bool {
-	maxWidths := make(map[string]int)
 	var maxNR int = 0
 
 	for e := records.Front(); e != nil; e = e.Next() {
@@ -96,195 +95,84 @@ func (this *RecordWriterPPRINT) writeHeterogenousList(
 		if maxNR < nr {
 			maxNR = nr
 		}
-		for pe := outrec.Head; pe != nil; pe = pe.Next {
-			width := utf8.RuneCountInString(pe.Value.String())
-			if width == 0 {
-				width = 1 // We'll rewrite "" to "-" below
-			}
-			oldMaxWidth := maxWidths[pe.Key]
-			if width > oldMaxWidth {
-				maxWidths[pe.Key] = width
-			}
-		}
 	}
 
 	if maxNR == 0 {
 		return false
-	} else {
-		// Column name may be longer/shorter than all data values in the column
-		for key, oldMaxWidth := range maxWidths {
-			width := utf8.RuneCountInString(key)
-			if width > oldMaxWidth {
-				maxWidths[key] = width
-			}
-		}
-		if barred {
-			this.writeHeterogenousListBarred(records, maxWidths, ostream)
-		} else {
-			this.writeHeterogenousListNonBarred(records, maxWidths, ostream)
-		}
-		return true
 	}
-}
-
-// ----------------------------------------------------------------
-// Example:
-//
-// a   b   i  x                    y
-// pan pan 1  0.3467901443380824   0.7268028627434533
-// eks pan 2  -0.7586799647899636  0.5221511083334797
-// wye wye 3  0.20460330576630303  0.33831852551664776
-// eks wye 4  -0.38139939387114097 0.13418874328430463
-// wye pan 5  0.5732889198020006   0.8636244699032729
-
-func (this *RecordWriterPPRINT) writeHeterogenousListNonBarred(
-	records *list.List,
-	maxWidths map[string]int,
-	ostream io.WriteCloser,
-) {
 
 	onFirst := true
+	t := getWriter(barred, ostream)
 	for e := records.Front(); e != nil; e = e.Next() {
 		outrec := e.Value.(*types.Mlrmap)
 
 		// Print header line
 		if onFirst {
-			var buffer bytes.Buffer // faster than fmt.Print() separately
+			headers := table.Row{}
 			for pe := outrec.Head; pe != nil; pe = pe.Next {
-				if pe.Next != nil {
-					buffer.WriteString(fmt.Sprintf("%-*s ", maxWidths[pe.Key], pe.Key))
-				} else {
-					buffer.WriteString(pe.Key)
-					buffer.WriteString("\n") // TODO: ORS
-				}
+				headers = append(headers, pe.Key)
 			}
-			ostream.Write(buffer.Bytes())
+			t.AppendHeader(headers)
+			onFirst = false
 		}
-		onFirst = false
 
 		// Print data lines
-		var buffer bytes.Buffer // faster than fmt.Print() separately
+		cols := table.Row{}
 		for pe := outrec.Head; pe != nil; pe = pe.Next {
-			s := pe.Value.String()
-			if s == "" {
-				s = "-"
-			}
-			if pe.Next != nil {
-				buffer.WriteString(fmt.Sprintf("%-*s ", maxWidths[pe.Key], s))
-			} else {
-				buffer.WriteString(s)
-				buffer.WriteString("\n") // TODO: ORS
-			}
+			cols = append(cols, pe.Value.String())
 		}
-		ostream.Write(buffer.Bytes())
+		t.AppendRow(cols)
 	}
+	t.Render()
+
+	return true
 }
 
 // ----------------------------------------------------------------
-// Example:
-//
-// +-----+-----+----+----------------------+---------------------+
-// | a   | b   | i  | x                    | y                   |
-// +-----+-----+----+----------------------+---------------------+
-// | pan | pan | 1  | 0.3467901443380824   | 0.7268028627434533  |
-// | eks | pan | 2  | -0.7586799647899636  | 0.5221511083334797  |
-// | wye | wye | 3  | 0.20460330576630303  | 0.33831852551664776 |
-// | eks | wye | 4  | -0.38139939387114097 | 0.13418874328430463 |
-// | wye | pan | 5  | 0.5732889198020006   | 0.8636244699032729  |
-// +-----+-----+----+----------------------+---------------------+
+func getWriter(barred bool, ostream io.WriteCloser) table.Writer {
+	t := table.NewWriter()
+	t.SetOutputMirror(ostream)
 
-// TODO: for better performance, uuse string-buffer as in DKVP for this and all
-// record-writers
-
-func (this *RecordWriterPPRINT) writeHeterogenousListBarred(
-	records *list.List,
-	maxWidths map[string]int,
-	ostream io.WriteCloser,
-) {
-
-	horizontalBars := make(map[string]string)
-	for key, width := range maxWidths {
-		horizontalBars[key] = strings.Repeat("-", width)
+	if barred {
+		t.SetStyle(table.StyleRounded)
+		t.Style().Format.Footer = text.FormatDefault
+		t.Style().Format.Header = text.FormatDefault
+		return t
 	}
-	horizontalStart := "+-"
-	horizontalMiddle := "-+-"
-	horizontalEnd := "-+"
-	verticalStart := "| "
-	verticalMiddle := " | "
-	verticalEnd := " |"
 
-	onFirst := true
-	for e := records.Front(); e != nil; e = e.Next() {
-		outrec := e.Value.(*types.Mlrmap)
+	t.SetStyle(table.Style{
+		Name: "NonBarred",
+		Box: table.BoxStyle{
+			BottomLeft:       "",
+			BottomRight:      "",
+			BottomSeparator:  "",
+			Left:             "",
+			LeftSeparator:    "",
+			MiddleHorizontal: " ",
+			MiddleSeparator:  "",
+			MiddleVertical:   "",
+			PaddingLeft:      "",
+			PaddingRight:     " ",
+			Right:            "",
+			RightSeparator:   "",
+			TopLeft:          "",
+			TopRight:         "",
+			TopSeparator:     "",
+			UnfinishedRow:    "",
+		},
+		Format: table.FormatOptions{
+			Footer: text.FormatDefault,
+			Header: text.FormatDefault,
+			Row:    text.FormatDefault,
+		},
+		Options: table.Options{
+			DrawBorder:      false,
+			SeparateColumns: false,
+			SeparateFooter:  false,
+			SeparateHeader:  false,
+			SeparateRows:    false,
+		},
+	})
 
-		// Print header line
-		if onFirst {
-			var buffer bytes.Buffer // faster than fmt.Print() separately
-
-			buffer.WriteString(horizontalStart)
-			for pe := outrec.Head; pe != nil; pe = pe.Next {
-				buffer.WriteString(horizontalBars[pe.Key])
-				if pe.Next != nil {
-					buffer.WriteString(horizontalMiddle)
-				} else {
-					buffer.WriteString(horizontalEnd)
-					buffer.WriteString("\n") // TOOD: ORS
-				}
-			}
-
-			buffer.WriteString(verticalStart)
-			for pe := outrec.Head; pe != nil; pe = pe.Next {
-				buffer.WriteString(fmt.Sprintf("%-*s", maxWidths[pe.Key], pe.Key))
-				if pe.Next != nil {
-					buffer.WriteString(verticalMiddle)
-				} else {
-					buffer.WriteString(verticalEnd)
-					buffer.WriteString("\n") // TOOD: ORS
-				}
-			}
-
-			buffer.WriteString(horizontalStart)
-			for pe := outrec.Head; pe != nil; pe = pe.Next {
-				buffer.WriteString(horizontalBars[pe.Key])
-				if pe.Next != nil {
-					buffer.WriteString(horizontalMiddle)
-				} else {
-					buffer.WriteString(horizontalEnd)
-					buffer.WriteString("\n") // TOOD: ORS
-				}
-			}
-
-			ostream.Write(buffer.Bytes())
-		}
-		onFirst = false
-
-		// Print data lines
-		var buffer bytes.Buffer // faster than fmt.Print() separately
-		buffer.WriteString(verticalStart)
-		for pe := outrec.Head; pe != nil; pe = pe.Next {
-			s := pe.Value.String()
-			buffer.WriteString(fmt.Sprintf("%-*s", maxWidths[pe.Key], s))
-			if pe.Next != nil {
-				buffer.WriteString(fmt.Sprint(verticalMiddle))
-			} else {
-				buffer.WriteString(verticalEnd)
-				buffer.WriteString("\n") // TOOD: ORS
-			}
-		}
-
-		if e.Next() == nil {
-			buffer.WriteString(horizontalStart)
-			for pe := outrec.Head; pe != nil; pe = pe.Next {
-				buffer.WriteString(horizontalBars[pe.Key])
-				if pe.Next != nil {
-					buffer.WriteString(horizontalMiddle)
-				} else {
-					buffer.WriteString(horizontalEnd)
-					buffer.WriteString("\n") // TOOD: ORS
-				}
-			}
-		}
-
-		ostream.Write(buffer.Bytes())
-	}
+	return t
 }

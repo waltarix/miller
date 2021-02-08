@@ -3,7 +3,8 @@ package output
 import (
 	"bytes"
 	"io"
-	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
 
 	"miller/cliutil"
 	"miller/types"
@@ -30,7 +31,7 @@ func (this *RecordWriterXTAB) Write(
 
 	maxKeyLength := 1
 	for pe := outrec.Head; pe != nil; pe = pe.Next {
-		keyLength := utf8.RuneCountInString(pe.Key)
+		keyLength := runewidth.StringWidth(pe.Key)
 		if keyLength > maxKeyLength {
 			maxKeyLength = keyLength
 		}
@@ -46,7 +47,7 @@ func (this *RecordWriterXTAB) Write(
 	}
 
 	for pe := outrec.Head; pe != nil; pe = pe.Next {
-		keyLength := utf8.RuneCountInString(pe.Key)
+		keyLength := runewidth.StringWidth(pe.Key)
 		padLength := maxKeyLength - keyLength
 
 		buffer.WriteString(pe.Key)
