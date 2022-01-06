@@ -10,6 +10,9 @@ package colorizer
 
 import (
 	"os"
+	"regexp"
+	"strings"
+	"sync"
 
 	lumin "github.com/johnkerl/lumin/pkg/colors"
 	"github.com/mattn/go-isatty"
@@ -26,6 +29,9 @@ const (
 	ColorizeOutputIfTTY
 	ColorizeOutputAlways
 )
+
+var once sync.Once
+var ansi16BoldRegex *regexp.Regexp
 
 // For command-line flags like --no-color and --always-color
 func SetColorization(arg TOutputColorization) {
@@ -144,6 +150,11 @@ func maybeColorize(text string, colorString string, outputIsStdout bool) string 
 }
 
 func colorize(text string, colorString string) string {
+	once.Do(func() {
+		ansi16BoldRegex = regexp.MustCompile("\033\\[1;(?P<code>\\d+)m")
+	})
+	colorString = strings.ReplaceAll(colorString, "\033[1;38;5;", "\033[0;38;5;")
+	colorString = ansi16BoldRegex.ReplaceAllString(colorString, "\033[0;${code}m")
 	return colorString + text + defaultColorString
 }
 
@@ -180,13 +191,13 @@ func GetColorization(outputIsStdout bool, isKey bool) (string, string) {
 // var keyColorString = lumin.MakeANSIEscapesFromNameUnconditionally("orange")
 // var valueColorString = lumin.MakeANSIEscapesFromNameUnconditionally("blue")
 // 6.1.0:
-var keyColorString = lumin.MakeANSIEscapesFromNameUnconditionally("bold-underline")
-var valueColorString = lumin.MakeANSIEscapesFromNameUnconditionally("plain")
-var passColorString = lumin.MakeANSIEscapesFromNameUnconditionally("bold-lime")
-var failColorString = lumin.MakeANSIEscapesFromNameUnconditionally("bold-red")
-var replPS1ColorString = lumin.MakeANSIEscapesFromNameUnconditionally("bold-red")
+var keyColorString = lumin.MakeANSIEscapesFromNameUnconditionally("blue-bold")
+var valueColorString = lumin.MakeANSIEscapesFromNameUnconditionally("orange1")
+var passColorString = lumin.MakeANSIEscapesFromNameUnconditionally("lime")
+var failColorString = lumin.MakeANSIEscapesFromNameUnconditionally("red")
+var replPS1ColorString = lumin.MakeANSIEscapesFromNameUnconditionally("red")
 var replPS2ColorString = lumin.MakeANSIEscapesFromNameUnconditionally("red")
-var helpColorString = lumin.MakeANSIEscapesFromNameUnconditionally("bold-red")
+var helpColorString = lumin.MakeANSIEscapesFromNameUnconditionally("red")
 
 // Used to switch back to default color
 var defaultColorString = "\u001b[0m"
