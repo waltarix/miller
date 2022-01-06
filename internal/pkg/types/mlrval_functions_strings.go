@@ -4,9 +4,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/johnkerl/miller/internal/pkg/lib"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // ================================================================
@@ -14,7 +15,7 @@ func BIF_strlen(input1 *Mlrval) *Mlrval {
 	if !input1.IsStringOrVoid() {
 		return MLRVAL_ERROR
 	} else {
-		return MlrvalFromInt(int(utf8.RuneCountInString(input1.printrep)))
+		return MlrvalFromInt(int(runewidth.StringWidth(input1.printrep)))
 	}
 }
 

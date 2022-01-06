@@ -1,0 +1,38 @@
+---
+project_name: mlr
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - main: cmd/mlr/main.go
+    binary: mlr
+    targets:
+      - linux_amd64
+      - darwin_amd64
+      - darwin_arm64
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/johnkerl/miller/internal/pkg/version.STRING={{ .RawVersion }}{{ if .Prerelease }}-{{ .Prerelease }}{{ end }}
+    hooks:
+      post:
+        - ./scripts/upx "{{ .Path }}"
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .RawVersion }}-{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format: tar.xz
+    files:
+      - none*
+
+snapshot:
+  name_template: "{{ .Tag }}-devel"
+
+checksum:
+  disable: true
+
+changelog:
+  skip: true
