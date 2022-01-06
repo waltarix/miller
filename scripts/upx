@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -eux
+
+if ! type upx >/dev/null; then
+  echo 'upx is not found'
+  exit 1
+fi
+
+binary=$1
+
+if [ ${binary#*arm64} != $binary ]; then
+  echo 'arm64 is not supported'
+  exit 0
+fi
+
+upx -9 $binary
