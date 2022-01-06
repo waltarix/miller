@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -eux
+
+target=$1
+binary=$2
+
+goos=${GOOS:-"$(go env GOOS)"}
+goarch=${GOARCH:-"$(go env GOARCH)"}
+
+if [ "$target" != "${goos}_${goarch}" ] || [ "${CI-}" = "true" ]; then
+  # nothing to do
+  exit 0
+fi
+
+export MLR_BIN_PATH="$binary"
+
+make -C man build

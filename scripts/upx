@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -eux
+
+if ! type upx >/dev/null; then
+  echo 'upx is not found'
+  exit 1
+fi
+
+binary=$1
+
+if [[ "$binary" == *darwin* ]]; then
+  echo 'macOS is currently not supported'
+  exit 0
+fi
+
+upx -9 "$binary"
