@@ -1,0 +1,5 @@
+{
+  "go.goplsOptions": {
+    "directoryFilters": ["-internal/pkg/parsing/parser"]
+  }
+}
