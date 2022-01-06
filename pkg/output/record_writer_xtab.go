@@ -3,11 +3,12 @@ package output
 import (
 	"bufio"
 	"fmt"
-	"unicode/utf8"
 
 	"github.com/johnkerl/miller/pkg/cli"
 	"github.com/johnkerl/miller/pkg/colorizer"
 	"github.com/johnkerl/miller/pkg/mlrval"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // ----------------------------------------------------------------
@@ -36,7 +37,7 @@ type RecordWriterXTAB struct {
 func NewRecordWriterXTAB(writerOptions *cli.TWriterOptions) (*RecordWriterXTAB, error) {
 	return &RecordWriterXTAB{
 		writerOptions: writerOptions,
-		opslen:        utf8.RuneCountInString(writerOptions.OPS),
+		opslen:        runewidth.StringWidth(writerOptions.OPS),
 		onFirst:       true,
 	}, nil
 }
@@ -53,7 +54,7 @@ func (writer *RecordWriterXTAB) Write(
 
 	maxKeyLength := 1
 	for pe := outrec.Head; pe != nil; pe = pe.Next {
-		keyLength := utf8.RuneCountInString(pe.Key)
+		keyLength := runewidth.StringWidth(pe.Key)
 		if keyLength > maxKeyLength {
 			maxKeyLength = keyLength
 		}
@@ -80,7 +81,7 @@ func (writer *RecordWriterXTAB) writeWithLeftAlignedValues(
 	}
 
 	for pe := outrec.Head; pe != nil; pe = pe.Next {
-		keyLength := utf8.RuneCountInString(pe.Key)
+		keyLength := runewidth.StringWidth(pe.Key)
 		keyPadLength := maxKeyLength - keyLength
 
 		bufferedOutputStream.WriteString(colorizer.MaybeColorizeKey(pe.Key, outputIsStdout))
@@ -113,7 +114,7 @@ func (writer *RecordWriterXTAB) writeWithRightAlignedValues(
 	for pe := outrec.Head; pe != nil; pe = pe.Next {
 		value := pe.Value.String()
 		values[i] = value
-		valueLength := utf8.RuneCountInString(value)
+		valueLength := runewidth.StringWidth(value)
 		if valueLength > maxValueLength {
 			maxValueLength = valueLength
 		}
@@ -129,7 +130,7 @@ func (writer *RecordWriterXTAB) writeWithRightAlignedValues(
 
 	i = 0
 	for pe := outrec.Head; pe != nil; pe = pe.Next {
-		keyLength := utf8.RuneCountInString(pe.Key)
+		keyLength := runewidth.StringWidth(pe.Key)
 		keyPadLength := maxKeyLength - keyLength
 
 		bufferedOutputStream.WriteString(colorizer.MaybeColorizeKey(pe.Key, outputIsStdout))

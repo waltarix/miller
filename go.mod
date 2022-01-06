@@ -14,15 +14,17 @@ module github.com/johnkerl/miller
 // Local development:
 // replace github.com/johnkerl/lumin => /Users/kerl/git/johnkerl/lumin
 
-go 1.19
+go 1.21
 
 require (
 	github.com/facette/natsort v0.0.0-20181210072756-2cd4dd1e2dcb
+	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/johnkerl/lumin v1.0.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/klauspost/compress v1.16.7
 	github.com/lestrrat-go/strftime v1.0.6
 	github.com/mattn/go-isatty v0.0.20
+	github.com/mattn/go-runewidth v0.0.13
 	github.com/nine-lives-later/go-windows-terminal-sequences v1.0.4
 	github.com/pkg/profile v1.7.0
 	github.com/stretchr/testify v1.8.4
@@ -37,5 +39,8 @@ require (
 	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rivo/uniseg v0.4.4 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/mattn/go-runewidth => github.com/waltarix/go-runewidth v0.0.15-custom
