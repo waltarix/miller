@@ -1,93 +1,47 @@
-# .goreleaser.yml
-release:
-  github:
-    owner: johnkerl
-    name: miller
+---
+version: 2
 
-snapshot:
-  name_template: SNAPSHOT-{{ .Commit }}
-
-#gomod:
-#  proxy: true
+project_name: mlr
 
 before:
   hooks:
-    - go mod tidy
+    - go mod download
 
 builds:
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-      - freebsd
-      - aix
-    goarch:
-      - 386
-      - amd64
-      - arm
-      - arm64
-      - s390x
-      - ppc64le
-      - ppc64
-      - riscv64
-    goarm:
-      - 6
-      - 7
-    ignore:
-      - goos: linux
-        goarch: ppc64
-      - goos: darwin
-        goarch: arm
-      - goos: darwin
-        goarch: ppc64le
-      - goos: darwin
-        goarch: s390x
-      - goos: windows
-        goarch: arm64
-      - goos: windows
-        goarch: arm
-      - goos: windows
-        goarch: ppc64le
-      - goos: windows
-        goarch: s390x
-      - goos: freebsd
-        goarch: arm
-      - goos: freebsd
-        goarch: s390x
-    dir: .
-    main: ./cmd/mlr
+  - main: ./cmd/mlr
     binary: mlr
+    targets:
+      - linux_amd64_v2
+      - linux_amd64_v4
+      - darwin_amd64_v3
+      - darwin_arm64
     flags:
       - -trimpath
-    #ldflags:
-    #  - -s -w 
+    ldflags:
+      - -s
+      - -X github.com/johnkerl/miller/internal/pkg/version.STRING={{ .RawVersion }}{{ if .Prerelease }}-{{ .Prerelease }}{{ end }}
+      - -w
+    hooks:
+      post:
+        - ./scripts/mkman "{{ .Os }}_{{ .Arch }}" "{{ .Path }}"
+        - ./scripts/upx "{{ .Path }}"
+    env:
+      - CGO_ENABLED=0
 
 archives:
-  - format: tar.gz
+  - name_template: "{{ .ProjectName }}-{{ .RawVersion }}-{{ .Os }}_{{ .Arch }}{{ if .Amd64 }}_{{ .Amd64 }}{{ end }}"
+    format: tar.xz
     wrap_in_directory: true
-    format_overrides:
-      - goos: windows
-        format: zip
-    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     files:
-      - LICENSE.txt
-      - README.md
+      - src: man/mlr.1
+        dst: .
+        strip_parent: true
 
-nfpms:
-  -
-    id: miller-nfpms
-    package_name: miller
-    file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    homepage: https://github.com/johnkerl/miller
-    maintainer: "John Kerl <johnkerl@users.noreply.github.com>"
-    description: Miller is like awk, sed, cut, join, and sort for data formats such as CSV, TSV, tabular JSON etc
-    license: BSD
-    formats:
-      - deb
-      - rpm
+snapshot:
+  name_template: "{{ .Tag }}-devel"
 
 checksum:
-  algorithm: sha256
-  name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
+  disable: true
+
+changelog:
+  disable: true
