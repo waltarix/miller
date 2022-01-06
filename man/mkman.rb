@@ -18,16 +18,17 @@ def main
 
   # Live code-generation needs to be using mlr from *this* tree, not from
   # somewhere else in the PATH.
-  unless File.executable?('../mlr')
+  mlr_bin = ENV['MLR_BIN_PATH']
+  unless File.executable?(mlr_bin)
     $stderr.puts "#{$0}: Need ../../mlr to exist: please check 'make build' in ../.."
     exit 1
   end
-  `../mlr --version`
+  `#{mlr_bin} --version`
   unless $?.success?
     $stderr.puts "#{$0}: Need '../../mlr --version' to succeed; please check 'make build' in ../.."
     exit 1
   end
-  ENV['PATH'] = '..:' + ENV['PATH']
+  ENV['PATH'] = ENV['PATH'].dup.prepend(File.dirname(mlr_bin), ':')
 
   print make_top
 

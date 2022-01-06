@@ -1,60 +1,44 @@
-# .goreleaser.yml
+---
+project_name: mlr
+
 before:
   hooks:
-    - go mod tidy
+    - go mod download
+
 builds:
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-      - freebsd
-      - aix
-    goarch:
-      - 386
-      - amd64
-      - arm
-      - arm64
-      - s390x
-      - ppc64le
-      - ppc64
-      - riscv64
-    goarm:
-      - 6
-      - 7
-    ignore:
-      - goos: linux
-        goarch: ppc64
-      - goos: darwin
-        goarch: arm
-      - goos: darwin
-        goarch: ppc64le
-      - goos: darwin
-        goarch: s390x
-      - goos: windows
-        goarch: arm64
-      - goos: windows
-        goarch: arm
-      - goos: windows
-        goarch: ppc64le
-      - goos: windows
-        goarch: s390x
-      - goos: freebsd
-        goarch: arm
-      - goos: freebsd
-        goarch: s390x
-    dir: .
-    main: ./cmd/mlr
+  - main: ./cmd/mlr
+    binary: mlr
+    targets:
+      - linux_amd64
+      - darwin_amd64
+      - darwin_arm64
     flags:
       - -trimpath
-    #ldflags:
-    #  - -s -w 
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/johnkerl/miller/internal/pkg/version.STRING={{ .RawVersion }}{{ if .Prerelease }}-{{ .Prerelease }}{{ end }}
+    hooks:
+      post:
+        - ./scripts/mkman "{{ .Target }}" "{{ .Path }}"
+        - ./scripts/upx "{{ .Path }}"
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .RawVersion }}-{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format: tar.xz
+    wrap_in_directory: "true"
+    files:
+      - src: man/man1/mlr.1
+        dst: .
+        strip_parent: true
+
+snapshot:
+  name_template: "{{ .Tag }}-devel"
 
 checksum:
-  algorithm: sha256
+  disable: true
 
-release:
-  github:
-    owner: johnkerl
-    name: miller
+changelog:
+  skip: true

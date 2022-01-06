@@ -243,7 +243,7 @@ func make16ColorString(i int) string {
 // make256ColorString constructs an ANSI-256-color-mode escape sequence
 func make256ColorString(i int) string {
 	i &= 255
-	return fmt.Sprintf("\033[1;38;5;%dm", i&255)
+	return fmt.Sprintf("\033[2;38;5;%dm", i&255)
 }
 
 // makeColorString constructs an ANSI-16-color-mode escape sequence if arg is
